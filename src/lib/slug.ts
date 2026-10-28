@@ -1,3 +1,4 @@
+
 import slugify from "slugify";
 import { prisma } from "./prisma";
 
@@ -6,7 +7,6 @@ export async function generateUniqueSlug(
   model: "anime" | "genre" | "studio",
   excludeId?: number
 ): Promise<string> {
-  // Generate slug awal
   const baseSlug = slugify(title, {
     lower: true,
     strict: true,
@@ -17,19 +17,18 @@ export async function generateUniqueSlug(
   let counter = 1;
 
   while (true) {
-    let existing = null;
+    let existing: { id: number } | null = null;
 
     switch (model) {
       case "anime":
         existing = await prisma.anime.findFirst({
           where: {
             slug,
-            ...(excludeId && {
-              NOT: {
-                id: excludeId,
-              },
+            ...(excludeId !== undefined && {
+              NOT: { id: excludeId },
             }),
           },
+          select: { id: true },
         });
         break;
 
@@ -37,51 +36,58 @@ export async function generateUniqueSlug(
         existing = await prisma.genre.findFirst({
           where: {
             slug,
-            ...(excludeId && {
-              NOT: {
-                id: excludeId,
-              },
+            ...(excludeId !== undefined && {
+              NOT: { id: excludeId },
             }),
           },
+          select: { id: true },
         });
         break;
 
-      case "studio":
+      case "studio": {
+        // Model Studio belum memiliki field slug.
+        // Periksa nama studio berdasarkan nama kandidat slug.
+        const candidateName = title;
+
         existing = await prisma.studio.findFirst({
           where: {
-            slug,
-            ...(excludeId && {
-              NOT: {
-                id: excludeId,
-              },
+            name: candidateName,
+            ...(excludeId !== undefined && {
+              NOT: { id: excludeId },
             }),
           },
+          select: { id: true },
         });
+
+        // Nama studio sudah unik di database.
+        // Slug studio sebaiknya ditambahkan ke schema jika
+        // ingin menyimpan dan menjamin keunikannya secara benar.
+        if (!existing) {
+          return slug;
+        }
+
         break;
-      
+      }
     }
 
-    if (!existing) break;
+    if (!existing) {
+      return slug;
+    }
 
     slug = `${baseSlug}-${counter++}`;
   }
-
-  return slug;
 }
 
 export async function generateEpisodeSlug(
   animeTitle: string,
   episodeNumber: number,
   excludeId?: number
-) {
-  const baseSlug = slugify(
-    `${animeTitle} ep ${episodeNumber}`,
-    {
-      lower: true,
-      strict: true,
-      trim: true,
-    }
-  );
+): Promise<string> {
+  const baseSlug = slugify(`${animeTitle} ep ${episodeNumber}`, {
+    lower: true,
+    strict: true,
+    trim: true,
+  });
 
   let slug = baseSlug;
   let counter = 1;
@@ -90,15 +96,16 @@ export async function generateEpisodeSlug(
     const existing = await prisma.episode.findFirst({
       where: {
         slug,
-        ...(excludeId && {
-          NOT: {
-            id: excludeId,
-          },
+        ...(excludeId !== undefined && {
+          NOT: { id: excludeId },
         }),
       },
+      select: { id: true },
     });
 
-    if (!existing) return slug;
+    if (!existing) {
+      return slug;
+    }
 
     slug = `${baseSlug}-${counter++}`;
   }

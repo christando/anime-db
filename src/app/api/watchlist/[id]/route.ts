@@ -13,6 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         const {id} = await params;
 
         const watchlist = await service.getAll(Number(id));
+        
 
         return success(watchlist, 200);
     }catch(e){

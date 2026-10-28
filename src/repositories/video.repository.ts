@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { VideoQuality } from "@prisma/client";
 
 export interface CreateVideoInput {
   server: string;

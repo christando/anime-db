@@ -45,9 +45,18 @@ export class AnimeService {
   }
 
   async updateAnime(id: number, data: Prisma.AnimeUpdateInput) {
-    const slug = await generateUniqueSlug(data.titleEn, "anime", id)
-    return this.repository.update(id, {...data, slug});
+  if (data.titleEn === undefined) {
+    return this.repository.update(id, data);
   }
+
+  if (typeof data.titleEn !== "string") {
+    throw new Error("titleEn harus berupa string");
+  }
+
+  const slug = await generateUniqueSlug(data.titleEn, "anime", id);
+
+  return this.repository.update(id, { ...data, slug });
+}
 
   async deleteAnime(id: number) {
     return this.repository.delete(id);

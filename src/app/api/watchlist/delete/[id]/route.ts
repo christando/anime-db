@@ -12,6 +12,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         const {id} = await params;
 
         const watchlist = await service.delete(Number(id));
+
+        
         return success(watchlist, 200)
     }catch(e){
         if(e instanceof Error){
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         await requireLogin(req);
 
         const {id} = await params;
-        const watchlist = await service.getById(id);
+        const watchlist = await service.getById(Number(id));
         return success(watchlist, 200);
     }catch(e){
         if(e instanceof Error){
